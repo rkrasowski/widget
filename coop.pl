@@ -104,12 +104,10 @@ __DATA__
 
 
     }
+
+
     GaugeMeter(gm3_settings);
  
-    function reloadGM3()
-    {
-        GaugeMeter(gm3_settings);
-    }
 
 
 
@@ -117,11 +115,7 @@ __DATA__
 };
 
 
-
-  </script>
-
-
-
-  </body>
+</script>
+</body>
 </html>
 
