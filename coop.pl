@@ -8,8 +8,8 @@ use Mojo::JSON qw(decode_json encode_json);
 my $minimum = 1;
 my $maximum = 100;
 
-my $minimumSpd = 0;
-my $maximumSpd = 15;
+my $minimumSpd = 1;
+my $maximumSpd = 100;
 
 
 
@@ -21,11 +21,12 @@ websocket '/echo' => sub {
 
   $ws->inactivity_timeout(300);
 
-  my $id = Mojo::IOLoop->recurring(0.5 => sub {
+  my $id = Mojo::IOLoop->recurring(1 => sub {
 
 my $outdoorTemp = $minimum + int(rand($maximum - $minimum));
 my $indoorTemp  = $minimum + int(rand($maximum - $minimum));
-my $cpuTemp = $minimumSpd + int(rand($maximumSpd - $minimumSpd));
+my $cpuTemp = cpuTempF();
+
 
 my $bytes = encode_json {outdoorTemp => $outdoorTemp, indoorTemp => $indoorTemp, cpuTemp => $cpuTemp};
 $ws->send($bytes);
@@ -41,6 +42,29 @@ $ws->send($bytes);
   });
 };
 app->start;
+
+
+
+sub cpuTempF 
+        {
+                
+                my $cpuTemp = `/opt/vc/bin/vcgencmd measure_temp`;
+                my @cpuTempBefore = split(/=/,$cpuTemp);
+                my $cpuTempBefore;
+                my @cpuTempAfter = split(/\'/,$cpuTempBefore[1]);
+                my $cpuTempAfter;
+                my $F = $cpuTempAfter[0] * 9/5 + 32;
+		return $F;
+        }
+
+
+
+
+
+
+
+
+
 
 __DATA__
 
@@ -60,7 +84,8 @@ __DATA__
 
 
    <div id="outdoorTempGauge" style="width: 320px";></div>
-
+	<div id="indoorTempGauge" style="width: 320px";></div>
+	 <div id="cpuTempGauge" style="width: 320px";></div>
 
 
 
@@ -78,9 +103,9 @@ __DATA__
 		var indoorTemp = res.indoorTemp;
 		var cpuTemp = res.cpuTemp;
       
+// Outdoor 
 
-
-    gm3_settings = 
+    outdoorTemp_settings = 
     {
         ElementId     : "outdoorTempGauge",
         Value         : outdoorTemp,
@@ -106,8 +131,68 @@ __DATA__
     }
 
 
-    GaugeMeter(gm3_settings);
+    GaugeMeter(outdoorTemp_settings);
  
+
+// Indoor 
+
+  indoorTemp_settings = 
+    {
+        ElementId     : "indoorTempGauge",
+        Value         : indoorTemp,
+        Animate       : false,
+        MinLabel      : "0 F",
+        MaxLabel      : "50F",
+        StartEazingAt   : 0.5,
+        Text          : "Indoor temp",
+        GaugeColors   :
+        [
+                '#006600', '#006600',
+                '#33CC33', '#33CC33',
+                '#33CC33', '#33CC33',
+                '#33CC33', '#FFCC00',
+                '#FF6600', '#FF0000'
+
+        ],
+        GaugeSegments : { BorderColor : '#0000FF', BorderWidth : 1},
+        NeedlePivot   : { BorderColor : '#0000FF', BackgroundColor : '#D0D0FF' },
+        Font          : '24px Helvetica'
+
+
+    }
+
+    GaugeMeter(indoorTemp_settings);
+
+// cpuTemp
+
+  cpuTemp_settings = 
+    {
+        ElementId     : "cpuTempGauge",
+        Value         : cpuTemp,
+        Animate       : false,
+	MaxValue      : 150,
+        MinLabel      : "0 F",
+        MaxLabel      : "150 F",
+        StartEazingAt   : 0.5,
+        Text          : "CPU  temp",
+        GaugeColors   :
+        [
+                '#006600', '#006600',
+                '#33CC33', '#33CC33',
+                '#33CC33', '#33CC33',
+                '#33CC33', '#FFCC00',
+                '#FF6600', '#FF0000'
+
+        ],
+        GaugeSegments : { BorderColor : '#0000FF', BorderWidth : 1},
+        NeedlePivot   : { BorderColor : '#0000FF', BackgroundColor : '#D0D0FF' },
+        Font          : '24px Helvetica'
+
+
+    }
+
+    GaugeMeter(cpuTemp_settings);
+
 
 
 
